@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Take Quiz</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #0f172a;
+      color: white;
+      padding: 30px;
+    }
+    .quiz-container {
+      max-width: 800px;
+      margin: auto;
+      background-color: rgba(255, 255, 255, 0.05);
+      padding: 30px;
+      border-radius: 15px;
+    }
+    .question {
+      margin-bottom: 25px;
+    }
+    .options label {
+      display: block;
+      margin-bottom: 8px;
+    }
+    .btn {
+      background-color: #f7971e;
+      color: white;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.3s ease;
+      margin-top: 20px;
+    }
+    .btn:hover {
+      background-color: #cf7601;
+    }
+    #result {
+      margin-top: 30px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #00ff88;
+    }
+  </style>
+</head>
+<body>
+    <!-- Start of Navbar -->
+<div style="background-color: #1e293b; padding: 15px; border-radius: 10px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;">
+    <div style="color: #facc15; font-size: 24px; font-weight: bold;">
+      🚀 QuizApp
+    </div>
+    <div>
+      <a href="index.html" style="margin-right: 20px; color: #ffffff; text-decoration: none;">Home</a>
+      <a href="login.html" style="margin-right: 20px; color: #ffffff; text-decoration: none;">Login</a>
+      <a href="signup.html" style="margin-right: 20px; color: #ffffff; text-decoration: none;">Sign Up</a>
+      <a href="create-quiz.html" style="margin-right: 20px; color: #ffffff; text-decoration: none;">Create Quiz</a>
+      <a href="take-quiz.html" style="color: #ffffff; text-decoration: none;">Take Quiz</a>
+    </div>
+  </div>
+  <!-- End of Navbar -->
+  
+
+  <div class="quiz-container">
+    <h2>📝 Take Quiz</h2>
+
+    <label for="quiz-id">Enter Quiz ID:</label>
+    <input type="text" id="quiz-id" placeholder="e.g. quiz_1715859546504" style="width:100%;padding:10px;border-radius:10px;border:none;margin-bottom:20px;"/>
+
+    <button class="btn" onclick="loadQuiz()">🔍 Load Quiz</button>
+
+    <div id="quiz-content" style="display:none;"></div>
+
+    <button id="submit-btn" class="btn" style="display:none;" onclick="submitQuiz()">📤 Submit Quiz</button>
+
+    <div id="result"></div>
+  </div>
+
+  <script>
+    let currentQuiz = null;
+
+    function loadQuiz() {
+      const id = document.getElementById("quiz-id").value;
+      const data = localStorage.getItem(id);
+
+      if (!data) {
+        alert("❌ Quiz not found with this ID.");
+        return;
+      }
+
+      currentQuiz = JSON.parse(data);
+      const container = document.getElementById("quiz-content");
+      container.innerHTML = `<h3>${currentQuiz.title}</h3>`;
+
+      currentQuiz.questions.forEach((q, index) => {
+        const options = q.options.map((opt, i) => `
+          <label>
+            <input type="radio" name="q${index}" value="${i}" />
+            ${opt}
+          </label>
+        `).join("");
+
+        container.innerHTML += `
+          <div class="question">
+            <p><strong>Q${index + 1}:</strong> ${q.question}</p>
+            <div class="options">${options}</div>
+          </div>
+        `;
+      });
+
+      container.style.display = "block";
+      document.getElementById("submit-btn").style.display = "inline-block";
+    }
+
+    function submitQuiz() {
+      const answers = [];
+      const resultDiv = document.getElementById("result");
+      let score = 0;
+
+      currentQuiz.questions.forEach((q, index) => {
+        const selected = document.querySelector(`input[name="q${index}"]:checked`);
+        const selectedIndex = selected ? parseInt(selected.value) : -1;
+        if (selectedIndex === q.correctAnswer) score++;
+        answers.push(selectedIndex);
+      });
+
+      resultDiv.innerHTML = `✅ Your score: ${score} / ${currentQuiz.questions.length}`;
+    }
+  </script>
+</body>
+</html>

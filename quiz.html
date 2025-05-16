@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Take Quiz - Guest Mode</title>
+  <link href="styles.css" rel="stylesheet" />
+  <style>
+    .quiz-container {
+      background-color: rgba(255, 255, 255, 0.08);
+      max-width: 700px;
+      margin: 60px auto;
+      padding: 30px;
+      border-radius: 20px;
+      color: white;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    }
+
+    .quiz-container h2 {
+      margin-bottom: 20px;
+    }
+
+    .question {
+      margin-bottom: 20px;
+    }
+
+    .options label {
+      display: block;
+      margin-bottom: 10px;
+      background-color: rgba(255, 255, 255, 0.1);
+      padding: 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .options label:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .submit-btn {
+      background-color: #f7971e;
+      padding: 12px 25px;
+      border: none;
+      border-radius: 10px;
+      font-weight: bold;
+      color: white;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: 0.3s ease;
+    }
+
+    .submit-btn:hover {
+      background-color: #cf7601;
+    }
+
+    .result-box {
+      margin-top: 30px;
+      background-color: rgba(0, 255, 0, 0.1);
+      padding: 20px;
+      border-radius: 10px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+    <!-- Start of Navbar -->
+<div style="background-color: #1e293b; padding: 15px; border-radius: 10px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;">
+    <div style="color: #facc15; font-size: 24px; font-weight: bold;">
+      🚀 QuizApp
+    </div>
+    <div>
+      <a href="index.html" style="margin-right: 20px; color: #ffffff; text-decoration: none;">Home</a>
+      <a href="login.html" style="margin-right: 20px; color: #ffffff; text-decoration: none;">Login</a>
+      <a href="signup.html" style="margin-right: 20px; color: #ffffff; text-decoration: none;">Sign Up</a>
+      <a href="create-quiz.html" style="margin-right: 20px; color: #ffffff; text-decoration: none;">Create Quiz</a>
+      <a href="take-quiz.html" style="color: #ffffff; text-decoration: none;">Take Quiz</a>
+    </div>
+  </div>
+  <!-- End of Navbar -->
+  
+  <div class="quiz-container">
+    <h2>🧠 Quiz: General Knowledge</h2>
+
+    <div class="question">
+      <p>1. What is the capital of France?</p>
+      <div class="options">
+        <label><input type="radio" name="q1" value="Berlin" /> Berlin</label>
+        <label><input type="radio" name="q1" value="Paris" /> Paris</label>
+        <label><input type="radio" name="q1" value="Rome" /> Rome</label>
+        <label><input type="radio" name="q1" value="Madrid" /> Madrid</label>
+      </div>
+    </div>
+
+    <div class="question">
+      <p>2. Who wrote "Hamlet"?</p>
+      <div class="options">
+        <label><input type="radio" name="q2" value="Charles Dickens" /> Charles Dickens</label>
+        <label><input type="radio" name="q2" value="William Shakespeare" /> William Shakespeare</label>
+        <label><input type="radio" name="q2" value="Mark Twain" /> Mark Twain</label>
+        <label><input type="radio" name="q2" value="Jane Austen" /> Jane Austen</label>
+      </div>
+    </div>
+
+    <button class="submit-btn" onclick="submitQuiz()">Submit Quiz</button>
+
+    <div class="result-box" id="result" style="display: none;"></div>
+  </div>
+
+  <script>
+    function submitQuiz() {
+      const answers = {
+        q1: "Paris",
+        q2: "William Shakespeare"
+      };
+
+      let score = 0;
+      let total = Object.keys(answers).length;
+
+      for (let key in answers) {
+        const selected = document.querySelector(`input[name="${key}"]:checked`);
+        if (selected && selected.value === answers[key]) {
+          score++;
+        }
+      }
+
+      const resultBox = document.getElementById("result");
+      resultBox.style.display = "block";
+      resultBox.innerHTML = `✅ You got ${score} out of ${total} correct.`;
+    }
+  </script>
+</body>
+</html>

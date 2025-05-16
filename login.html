@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login</title>
+  <style>
+    body {
+      background-color: #0f172a;
+      color: white;
+      font-family: Arial, sans-serif;
+      padding: 40px;
+    }
+    .form-container {
+      max-width: 400px;
+      margin: auto;
+      background-color: #1e293b;
+      padding: 30px;
+      border-radius: 15px;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0 20px;
+      border-radius: 10px;
+      border: none;
+    }
+    .btn {
+      background-color: #38bdf8;
+      color: black;
+      font-weight: bold;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+    <!-- Start of Navbar -->
+<div style="background-color: #1e293b; padding: 15px; border-radius: 10px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;">
+    <div style="color: #facc15; font-size: 24px; font-weight: bold;">
+      🚀 QuizApp
+    </div>
+    <div>
+      <a href="index.html" style="margin-right: 20px; color: #ffffff; text-decoration: none;">Home</a>
+      <a href="login.html" style="margin-right: 20px; color: #ffffff; text-decoration: none;">Login</a>
+      <a href="signup.html" style="margin-right: 20px; color: #ffffff; text-decoration: none;">Sign Up</a>
+      <a href="create-quiz.html" style="margin-right: 20px; color: #ffffff; text-decoration: none;">Create Quiz</a>
+      <a href="take-quiz.html" style="color: #ffffff; text-decoration: none;">Take Quiz</a>
+    </div>
+  </div>
+  <!-- End of Navbar -->
+  
+  <div class="form-container">
+    <h2>🔐 Login</h2>
+    <input type="email" id="email" placeholder="Email" required />
+    <input type="password" id="password" placeholder="Password" required />
+    <button class="btn" onclick="login()">Login</button>
+    <p>Don't have an account? <a href="signup.html" style="color: #facc15;">Sign up</a></p>
+  </div>
+
+  <script>
+    function login() {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+
+      const storedUser = localStorage.getItem(`user_${email}`);
+      if (!storedUser) {
+        alert("❌ Email not found. Please sign up first.");
+        return;
+      }
+
+      const user = JSON.parse(storedUser);
+      if (user.password !== password) {
+        alert("❌ Incorrect password.");
+        return;
+      }
+
+      // تسجيل الدخول ناجح
+      localStorage.setItem("loggedInUser", JSON.stringify(user));
+      alert("✅ Login successful!");
+      window.location.href = "dashboard.html";
+    }
+  </script>
+</body>
+</html>

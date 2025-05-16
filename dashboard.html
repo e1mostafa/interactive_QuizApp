@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dashboard</title>
+  <style>
+    body {
+      background-color: #0f172a;
+      color: white;
+      font-family: Arial, sans-serif;
+      padding: 40px;
+      text-align: center;
+    }
+    .card {
+      background-color: #1e293b;
+      padding: 30px;
+      border-radius: 15px;
+      max-width: 400px;
+      margin: auto;
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      margin: 10px 0;
+      padding: 12px;
+      background-color: #facc15;
+      color: black;
+      font-weight: bold;
+      border: none;
+      border-radius: 10px;
+      text-decoration: none;
+      font-size: 16px;
+    }
+    .logout {
+      margin-top: 20px;
+      color: #38bdf8;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>👋 Welcome, <span id="username">User</span>!</h2>
+    <p>What would you like to do?</p>
+    <a href="create-quiz.html" class="btn">✏️ Create a Quiz</a>
+    <a href="take-quiz.html" class="btn">🧠 Take a Quiz</a>
+    <div class="logout" onclick="logout()">🚪 Logout</div>
+  </div>
+
+  <script>
+    const user = JSON.parse(localStorage.getItem("loggedInUser"));
+    if (!user) {
+      window.location.href = "login.html"; // لو مش مسجل دخول نرجعه
+    } else {
+      document.getElementById("username").innerText = user.username;
+    }
+
+    function logout() {
+      localStorage.removeItem("loggedInUser");
+      alert("👋 Logged out successfully!");
+      window.location.href = "login.html";
+    }
+  </script>
+</body>
+</html>

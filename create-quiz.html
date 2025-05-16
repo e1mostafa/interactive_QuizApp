@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Create Quiz</title>
+  <link href="styles.css" rel="stylesheet" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #0f172a;
+      color: white;
+      padding: 30px;
+    }
+    .quiz-form {
+      background-color: rgba(255, 255, 255, 0.05);
+      padding: 30px;
+      border-radius: 15px;
+      max-width: 800px;
+      margin: auto;
+    }
+    .quiz-form input, .quiz-form textarea, .quiz-form select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      margin-bottom: 15px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+    }
+    .question-block {
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+    .btn {
+      background-color: #f7971e;
+      color: white;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.3s ease;
+    }
+    .btn:hover {
+      background-color: #cf7601;
+    }
+  </style>
+</head>
+<body>
+    <!-- Start of Navbar -->
+<div style="background-color: #1e293b; padding: 15px; border-radius: 10px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;">
+    <div style="color: #facc15; font-size: 24px; font-weight: bold;">
+      🚀 QuizApp
+    </div>
+    <div>
+      <a href="index.html" style="margin-right: 20px; color: #ffffff; text-decoration: none;">Home</a>
+      <a href="login.html" style="margin-right: 20px; color: #ffffff; text-decoration: none;">Login</a>
+      <a href="signup.html" style="margin-right: 20px; color: #ffffff; text-decoration: none;">Sign Up</a>
+      <a href="create-quiz.html" style="margin-right: 20px; color: #ffffff; text-decoration: none;">Create Quiz</a>
+      <a href="take-quiz.html" style="color: #ffffff; text-decoration: none;">Take Quiz</a>
+    </div>
+  </div>
+  <!-- End of Navbar -->
+  
+
+  <div class="quiz-form">
+    <h2>🛠️ Create Your Quiz</h2>
+
+    <label>Quiz Title:</label>
+    <input type="text" id="quiz-title" placeholder="e.g. Math Quiz"/>
+
+    <div id="questions-container">
+      <!-- Questions will be added here -->
+    </div>
+
+    <button class="btn" onclick="addQuestion()">+ Add Question</button>
+    <button class="btn" onclick="saveQuiz()">✅ Save Quiz</button>
+  </div>
+
+  <script>
+    let questionCount = 0;
+
+    function addQuestion() {
+      questionCount++;
+      const container = document.getElementById("questions-container");
+
+      const questionHTML = `
+        <div class="question-block" id="question-${questionCount}">
+          <h4>Question ${questionCount}</h4>
+          <input type="text" placeholder="Enter question text" class="question-text" />
+
+          <label>Option A:</label>
+          <input type="text" class="option" />
+          <label>Option B:</label>
+          <input type="text" class="option" />
+          <label>Option C:</label>
+          <input type="text" class="option" />
+          <label>Option D:</label>
+          <input type="text" class="option" />
+
+          <label>Correct Answer:</label>
+          <select class="correct-answer">
+            <option value="0">Option A</option>
+            <option value="1">Option B</option>
+            <option value="2">Option C</option>
+            <option value="3">Option D</option>
+          </select>
+        </div>
+      `;
+      container.insertAdjacentHTML("beforeend", questionHTML);
+    }
+
+    function saveQuiz() {
+      const title = document.getElementById("quiz-title").value;
+      const questions = [];
+
+      const blocks = document.querySelectorAll(".question-block");
+      blocks.forEach(block => {
+        const questionText = block.querySelector(".question-text").value;
+        const options = Array.from(block.querySelectorAll(".option")).map(opt => opt.value);
+        const correctIndex = block.querySelector(".correct-answer").value;
+
+        questions.push({
+          question: questionText,
+          options: options,
+          correctAnswer: parseInt(correctIndex)
+        });
+      });
+
+      const quiz = {
+        title: title,
+        questions: questions
+      };
+
+      // احفظ الكويز في localStorage مؤقتًا
+      const id = "quiz_" + Date.now();
+      localStorage.setItem(id, JSON.stringify(quiz));
+
+      alert("✅ Quiz saved! Share this ID: " + id);
+    }
+  </script>
+</body>
+</html>
