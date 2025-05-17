@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Your Profile - QuizApp</title>
+  <style>
+    body {
+      background-color: #0f172a;
+      color: white;
+      font-family: Arial, sans-serif;
+      padding: 30px;
+    }
+    h2, h3, h4, h5 {
+      color: #facc15;
+    }
+    .quiz-card {
+      background-color: #1e293b;
+      padding: 20px;
+      border-radius: 15px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      position: relative;
+    }
+    .student-result {
+      background-color: #334155;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 10px;
+    }
+    .navbar {
+      background-color: #1e293b;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .navbar a {
+      color: #ffffff;
+      text-decoration: none;
+      margin-right: 20px;
+    }
+    .navbar a:hover {
+      text-decoration: underline;
+    }
+    .btn {
+      background-color: #f7971e;
+      color: white;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.3s ease;
+    }
+    .btn:hover {
+      background-color: #cf7601;
+    }
+    .answer-text {
+      background-color: #475569;
+      padding: 6px 10px;
+      border-radius: 6px;
+      margin-top: 3px;
+      white-space: pre-wrap;
+    }
+    .delete-btn {
+      background-color: #dc2626;
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      padding: 8px 12px;
+      font-size: 14px;
+    }
+    .delete-btn:hover {
+      background-color: #b91c1c;
+    }
+    input[type=number] {
+      background-color: #475569;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      padding: 4px 8px;
+      margin-left: 10px;
+      width: 60px;
+      font-weight: bold;
+    }
+    label {
+      display: block;
+      margin-top: 6px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Start of Navbar -->
+  <div class="navbar">
+    <div style="color: #facc15; font-size: 24px; font-weight: bold;">
+      🚀 QuizApp
+    </div>
+    <div>
+      <a href="index.html">Home</a>
+      <a href="take-quiz.html">Take Quiz</a>
+      <a href="profile.html">Profile</a>
+      <button onclick="logout()" class="btn">Logout</button>
+    </div>
+  </div>
+  <!-- End of Navbar -->
+
+  <h2>👤 Welcome, <span id="username">User</span></h2>
+  <h3>Your Quizzes:</h3>
+
+  <div id="quizContainer"></div>
+
+  <script>
+    const currentUser = JSON.parse(localStorage.getItem("loggedInUser"));
+    if (!currentUser) {
+      alert("Please login first.");
+      window.location.href = "login.html";
+    }
+
+    document.getElementById("username").innerText = currentUser.email;
+
+    const allQuizKeys = Object.keys(localStorage).filter(key => key.startsWith('quiz_'));
+
+    const allQuizzes = allQuizKeys.map(key => {
+      try {
+        return JSON.parse(localStorage.getItem(key));
+      } catch {
+        return null;
+      }
+    }).filter(q => q !== null);
+
+    // فقط الكويزات التي تم إنشاؤها بواسطة المستخدم الحالي
+    const myQuizzes = allQuizzes.filter(quiz => quiz.createdBy === currentUser.email);
+
+    const container = document.getElementById("quizContainer");
+
+    if (myQuizzes.length === 0) {
+      container.innerHTML = "<p>You haven't created any quizzes yet.</p>";
+    } else {
+      myQuizzes.forEach(quiz => {
+        const resultsKey = `results_${quiz.id}`;
+        const results = JSON.parse(localStorage.getItem(resultsKey)) || [];
+
+        const quizDiv = document.createElement("div");
+        quizDiv.className = "quiz-card";
+
+        quizDiv.innerHTML = `
+          <h4>📘 ${quiz.title}</h4>
+          <p><strong>Quiz ID:</strong> ${quiz.id || 'N/A'}</p>
+          <p><strong>Start:</strong> ${new Date(quiz.startTime).toLocaleString()}</p>
+          <p><strong>End:</strong> ${new Date(quiz.endTime).toLocaleString()}</p>
+
+          <button class="btn delete-btn" data-quizid="${quiz.id}">🗑️ Delete Quiz</button>
+
+          <h5>🎯 Results:</h5>
+          ${
+            results.length > 0
+              ? results.map(r => {
+                  const hasTextQuestions = quiz.questions.some(q => q.type === "text");
+
+                  const answersHtml = quiz.questions.map((q, i) => {
+                    let userAnswer = r.answers && r.answers[i];
+                    if (q.type === "text") {
+                      userAnswer = userAnswer ? userAnswer : "<i>No answer provided</i>";
+                    } else if (q.type === "multiple") {
+                      if (!userAnswer || userAnswer.length === 0) {
+                        userAnswer = "<i>No answer selected</i>";
+                      } else if (Array.isArray(userAnswer)) {
+                        userAnswer = userAnswer.map(idx => q.options[idx] || "Invalid answer").join(", ");
+                      }
+                    } else {
+                      if (userAnswer === undefined || userAnswer === -1) {
+                        userAnswer = "<i>No answer selected</i>";
+                      } else {
+                        userAnswer = q.options[userAnswer] || "<i>Invalid answer</i>";
+                      }
+                    }
+                    return `
+                      <div style="margin-top:10px;">
+                        <strong>Q${i + 1}:</strong> ${q.question} <br/>
+                        <strong>Your Answer:</strong> 
+                        <div class="answer-text">${userAnswer}</div>
+                        ${
+                          q.type === "text"
+                          ? `<label>تصحيح السؤال النصي ${i + 1}: 
+                              <input type="number" min="0" max="10" step="0.1" 
+                                     data-answer-index="${i}" 
+                                     value="${r.textScores && r.textScores[i] != null ? r.textScores[i] : ''}" />
+                            </label>`
+                          : ""
+                        }
+                      </div>
+                    `;
+                  }).join("");
+
+                  const correctionButton = hasTextQuestions ? `<button class="btn save-correction-btn" data-email="${r.email}" data-quizid="${quiz.id}">💾 حفظ التصحيح</button>` : "";
+
+                  return `
+                    <div class="student-result">
+                      <strong>Email:</strong> ${r.email}<br>
+                      <strong>User ID:</strong> ${r.userId}<br>
+                      <strong>Score:</strong> ${r.score} / ${quiz.questions.length}<br>
+                      <small>Submitted: ${new Date(r.timestamp).toLocaleString()}</small>
+                      <div style="margin-top:10px;">
+                        <h5>Answers:</h5>
+                        ${answersHtml}
+                      </div>
+                      <div style="margin-top: 10px;">
+                        ${correctionButton}
+                      </div>
+                    </div>
+                  `;
+                }).join("")
+              : "<p>No one has taken this quiz yet.</p>"
+          }
+        `;
+        container.appendChild(quizDiv);
+      });
+    }
+
+    // حذف الكويز ونتائجه من localStorage
+    document.addEventListener("click", function(e) {
+      if (e.target.classList.contains("delete-btn")) {
+        const quizId = e.target.getAttribute("data-quizid");
+        if (confirm("هل أنت متأكد أنك تريد حذف هذا الكويز؟ سيتم حذف جميع النتائج المتعلقة به أيضًا.")) {
+          localStorage.removeItem(`quiz_${quizId}`);
+          localStorage.removeItem(`results_${quizId}`);
+
+          // حذف العنصر من الصفحة
+          e.target.parentElement.remove();
+
+          alert("تم حذف الكويز بنجاح!");
+        }
+      }
+    });
+
+    // حفظ درجات التصحيح النصي
+    container.addEventListener("click", function(e) {
+  if (e.target.classList.contains("save-correction-btn")) {
+    const quizId = e.target.getAttribute("data-quizid");
+    const userEmail = e.target.getAttribute("data-email");
+
+    const resultsKey = `results_${quizId}`;
+    const results = JSON.parse(localStorage.getItem(resultsKey)) || [];
+
+    const result = results.find(r => r.email === userEmail);
+    if (!result) {
+      alert("لم يتم العثور على النتيجة.");
+      return;
+    }
+
+    const quizDiv = e.target.closest(".quiz-card");
+    const inputs = quizDiv.querySelectorAll(`input[data-answer-index]`);
+
+    const textScores = [];
+    inputs.forEach(input => {
+      const idx = parseInt(input.getAttribute("data-answer-index"));
+      const val = parseFloat(input.value);
+      textScores[idx] = isNaN(val) ? 0 : val;  // لو مش مدخل درجة اعتبرها 0
+    });
+
+    result.textScores = textScores;
+
+    // هنا نحسب الدرجة النهائية: 
+    // مجموع درجات الأسئلة النصية + الدرجة الأصلية (score)
+    const totalTextScore = textScores.reduce((a,b) => a + b, 0);
+    result.finalScore = (result.score || 0) + totalTextScore;
+
+    // نعطي علامة تصحيح
+    result.corrected = true;
+
+    localStorage.setItem(resultsKey, JSON.stringify(results));
+
+    alert("تم حفظ تصحيح الأسئلة النصية والدرجة النهائية بنجاح.");
+    // لإظهار التغيير فورًا يمكن إعادة تحميل الصفحة أو تحديث العرض هنا إذا أردت
+    location.reload();
+  }
+});
+  
+    function logout() {
+      localStorage.removeItem("loggedInUser");
+      window.location.href = "login.html";
+    }
+  </script>
+</body>
+</html>

@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Create Quiz</title>
-  <link href="styles.css" rel="stylesheet" />
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -50,21 +49,6 @@
   </style>
 </head>
 <body>
-    <!-- Start of Navbar -->
-<div style="background-color: #1e293b; padding: 15px; border-radius: 10px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;">
-    <div style="color: #facc15; font-size: 24px; font-weight: bold;">
-      🚀 QuizApp
-    </div>
-    <div>
-      <a href="index.html" style="margin-right: 20px; color: #ffffff; text-decoration: none;">Home</a>
-      <a href="login.html" style="margin-right: 20px; color: #ffffff; text-decoration: none;">Login</a>
-      <a href="signup.html" style="margin-right: 20px; color: #ffffff; text-decoration: none;">Sign Up</a>
-      <a href="create-quiz.html" style="margin-right: 20px; color: #ffffff; text-decoration: none;">Create Quiz</a>
-      <a href="take-quiz.html" style="color: #ffffff; text-decoration: none;">Take Quiz</a>
-    </div>
-  </div>
-  <!-- End of Navbar -->
-  
 
   <div class="quiz-form">
     <h2>🛠️ Create Your Quiz</h2>
@@ -72,9 +56,13 @@
     <label>Quiz Title:</label>
     <input type="text" id="quiz-title" placeholder="e.g. Math Quiz"/>
 
-    <div id="questions-container">
-      <!-- Questions will be added here -->
-    </div>
+    <label>Start Time:</label>
+    <input type="datetime-local" id="quiz-start" />
+
+    <label>End Time:</label>
+    <input type="datetime-local" id="quiz-end" />
+
+    <div id="questions-container"></div>
 
     <button class="btn" onclick="addQuestion()">+ Add Question</button>
     <button class="btn" onclick="saveQuiz()">✅ Save Quiz</button>
@@ -83,15 +71,52 @@
   <script>
     let questionCount = 0;
 
+    const currentUser = JSON.parse(localStorage.getItem("loggedInUser"));
+    if (!currentUser) {
+      alert("Please login first.");
+      window.location.href = "login.html";
+    }
+
     function addQuestion() {
       questionCount++;
       const container = document.getElementById("questions-container");
-
       const questionHTML = `
         <div class="question-block" id="question-${questionCount}">
           <h4>Question ${questionCount}</h4>
           <input type="text" placeholder="Enter question text" class="question-text" />
 
+          <label>Question Type:</label>
+          <select class="question-type" onchange="renderOptions(this, ${questionCount})">
+            <option value="single">Single Choice</option>
+            <option value="multiple">Multiple Choice</option>
+            <option value="text">Text Answer</option>
+          </select>
+
+          <div class="options-area" id="options-area-${questionCount}">
+            <!-- Options will be rendered here -->
+          </div>
+        </div>
+      `;
+      container.insertAdjacentHTML("beforeend", questionHTML);
+
+      // Automatically render default type options (single)
+      const selectEl = document.querySelector(`#question-${questionCount} .question-type`);
+      renderOptions(selectEl, questionCount);
+    }
+
+    function renderOptions(selectEl, qId) {
+      const selectedType = selectEl.value;
+      const container = document.getElementById(`options-area-${qId}`);
+
+      if (selectedType === "text") {
+        // For text answer, add a textarea for correct answer input
+        container.innerHTML = `
+          <label>Correct Answer (Text):</label>
+          <textarea class="correct-text-answer" rows="3" placeholder="Enter correct answer text here..."></textarea>
+        `;
+      } else {
+        // For single or multiple choice, show options
+        let html = `
           <label>Option A:</label>
           <input type="text" class="option" />
           <label>Option B:</label>
@@ -100,46 +125,111 @@
           <input type="text" class="option" />
           <label>Option D:</label>
           <input type="text" class="option" />
+        `;
 
-          <label>Correct Answer:</label>
-          <select class="correct-answer">
-            <option value="0">Option A</option>
-            <option value="1">Option B</option>
-            <option value="2">Option C</option>
-            <option value="3">Option D</option>
-          </select>
-        </div>
-      `;
-      container.insertAdjacentHTML("beforeend", questionHTML);
+        if (selectedType === "single") {
+          html += `
+            <label>Correct Answer:</label>
+            <select class="correct-answer">
+              <option value="0">Option A</option>
+              <option value="1">Option B</option>
+              <option value="2">Option C</option>
+              <option value="3">Option D</option>
+            </select>
+          `;
+        } else if (selectedType === "multiple") {
+          html += `
+            <label>Correct Answers:</label><br/>
+            <label><input type="checkbox" value="0" class="multi-correct" /> A</label><br/>
+            <label><input type="checkbox" value="1" class="multi-correct" /> B</label><br/>
+            <label><input type="checkbox" value="2" class="multi-correct" /> C</label><br/>
+            <label><input type="checkbox" value="3" class="multi-correct" /> D</label>
+          `;
+        }
+
+        container.innerHTML = html;
+      }
     }
 
     function saveQuiz() {
       const title = document.getElementById("quiz-title").value;
-      const questions = [];
+      const startTime = document.getElementById("quiz-start").value;
+      const endTime = document.getElementById("quiz-end").value;
 
+      if (!title || !startTime || !endTime) {
+        alert("⚠️ Please fill in the title and both start/end times.");
+        return;
+      }
+
+      if (new Date(startTime) >= new Date(endTime)) {
+        alert("⚠️ End time must be after start time.");
+        return;
+      }
+
+      const questions = [];
       const blocks = document.querySelectorAll(".question-block");
+
       blocks.forEach(block => {
-        const questionText = block.querySelector(".question-text").value;
-        const options = Array.from(block.querySelectorAll(".option")).map(opt => opt.value);
-        const correctIndex = block.querySelector(".correct-answer").value;
+        const questionText = block.querySelector(".question-text").value.trim();
+        const questionType = block.querySelector(".question-type").value;
+
+        if (!questionText) {
+          alert("⚠️ Please enter question text for all questions.");
+          throw new Error("Question text missing");
+        }
+
+        let options = [];
+        let correctAnswer;
+
+        if (questionType === "text") {
+          // No options for text type, correct answer from textarea
+          const correctText = block.querySelector(".correct-text-answer").value.trim();
+          if (!correctText) {
+            alert("⚠️ Please enter correct text answer.");
+            throw new Error("Correct text answer missing");
+          }
+          correctAnswer = correctText;
+        } else {
+          options = Array.from(block.querySelectorAll(".option")).map(opt => opt.value.trim());
+          if (options.some(opt => opt === "")) {
+            alert("⚠️ Please fill in all option fields.");
+            throw new Error("Option missing");
+          }
+
+          if (questionType === "single") {
+            const correctIndex = block.querySelector(".correct-answer").value;
+            correctAnswer = parseInt(correctIndex);
+          } else if (questionType === "multiple") {
+            const checkedBoxes = block.querySelectorAll(".multi-correct:checked");
+            if (checkedBoxes.length === 0) {
+              alert("⚠️ Please select at least one correct answer.");
+              throw new Error("No correct multiple choice selected");
+            }
+            correctAnswer = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
+          }
+        }
 
         questions.push({
+          type: questionType,
           question: questionText,
           options: options,
-          correctAnswer: parseInt(correctIndex)
+          correctAnswer: correctAnswer
         });
       });
 
       const quiz = {
+        id: "quiz_" + Date.now(),
         title: title,
-        questions: questions
+        startTime: startTime,
+        endTime: endTime,
+        questions: questions,
+        createdBy: currentUser.email,
+        results: []
       };
 
-      // احفظ الكويز في localStorage مؤقتًا
-      const id = "quiz_" + Date.now();
-      localStorage.setItem(id, JSON.stringify(quiz));
+      localStorage.setItem(quiz.id, JSON.stringify(quiz));
 
-      alert("✅ Quiz saved! Share this ID: " + id);
+      alert("✅ Quiz saved! Share this ID: " + quiz.id);
     }
   </script>
 </body>

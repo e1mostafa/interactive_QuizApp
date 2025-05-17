@@ -45,11 +45,19 @@
       font-weight: bold;
       color: #00ff88;
     }
+    textarea {
+      width: 100%;
+      border-radius: 8px;
+      padding: 8px;
+      border: none;
+      resize: vertical;
+      font-size: 14px;
+      font-family: Arial, sans-serif;
+    }
   </style>
 </head>
 <body>
-    <!-- Start of Navbar -->
-<div style="background-color: #1e293b; padding: 15px; border-radius: 10px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;">
+  <div style="background-color: #1e293b; padding: 15px; border-radius: 10px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;">
     <div style="color: #facc15; font-size: 24px; font-weight: bold;">
       🚀 QuizApp
     </div>
@@ -57,15 +65,13 @@
       <a href="index.html" style="margin-right: 20px; color: #ffffff; text-decoration: none;">Home</a>
       <a href="login.html" style="margin-right: 20px; color: #ffffff; text-decoration: none;">Login</a>
       <a href="signup.html" style="margin-right: 20px; color: #ffffff; text-decoration: none;">Sign Up</a>
-      <a href="create-quiz.html" style="margin-right: 20px; color: #ffffff; text-decoration: none;">Create Quiz</a>
-      <a href="take-quiz.html" style="color: #ffffff; text-decoration: none;">Take Quiz</a>
+      <a href="take-quiz.html"  style="margin-right: 20px; color: #ffffff; text-decoration: none;">Take Quiz</a>
+      <a href="profile.html" style="margin-right: 20px; color: #ffffff; text-decoration: none;">Profile</a>
     </div>
   </div>
-  <!-- End of Navbar -->
-  
 
   <div class="quiz-container">
-    <h2>📝 Take Quiz</h2>
+    <h2>📜 Take Quiz</h2>
 
     <label for="quiz-id">Enter Quiz ID:</label>
     <input type="text" id="quiz-id" placeholder="e.g. quiz_1715859546504" style="width:100%;padding:10px;border-radius:10px;border:none;margin-bottom:20px;"/>
@@ -81,53 +87,117 @@
 
   <script>
     let currentQuiz = null;
+    let currentUser = JSON.parse(localStorage.getItem("loggedInUser"));
+
+    if (!currentUser) {
+      alert("Please login first to take a quiz.");
+      window.location.href = "login.html";
+    }
 
     function loadQuiz() {
-      const id = document.getElementById("quiz-id").value;
-      const data = localStorage.getItem(id);
+      const id = document.getElementById("quiz-id").value.trim();
+      if (!id) {
+        alert("Please enter a quiz ID.");
+        return;
+      }
 
+      const data = localStorage.getItem(id);
       if (!data) {
         alert("❌ Quiz not found with this ID.");
         return;
       }
 
       currentQuiz = JSON.parse(data);
+      currentQuiz.id = id;
+
       const container = document.getElementById("quiz-content");
       container.innerHTML = `<h3>${currentQuiz.title}</h3>`;
 
       currentQuiz.questions.forEach((q, index) => {
-        const options = q.options.map((opt, i) => `
-          <label>
-            <input type="radio" name="q${index}" value="${i}" />
-            ${opt}
-          </label>
-        `).join("");
+        let optionsHTML = "";
+
+        if (q.type === "multiple") {
+          optionsHTML = q.options.map((opt, i) => `
+            <label>
+              <input type="checkbox" name="q${index}" value="${i}" /> ${opt}
+            </label>
+          `).join("");
+        } else if (q.type === "text") {
+          optionsHTML = `<textarea name="q${index}" rows="3" placeholder="اكتب إجابتك هنا..."></textarea>`;
+        } else {
+          optionsHTML = q.options.map((opt, i) => `
+            <label>
+              <input type="radio" name="q${index}" value="${i}" /> ${opt}
+            </label>
+          `).join("");
+        }
 
         container.innerHTML += `
           <div class="question">
             <p><strong>Q${index + 1}:</strong> ${q.question}</p>
-            <div class="options">${options}</div>
+            <div class="options">${optionsHTML}</div>
           </div>
         `;
       });
 
       container.style.display = "block";
       document.getElementById("submit-btn").style.display = "inline-block";
+      document.getElementById("result").innerHTML = "";
     }
 
     function submitQuiz() {
+      if (!currentQuiz) {
+        alert("Please load a quiz first.");
+        return;
+      }
+
       const answers = [];
-      const resultDiv = document.getElementById("result");
       let score = 0;
 
       currentQuiz.questions.forEach((q, index) => {
-        const selected = document.querySelector(`input[name="q${index}"]:checked`);
-        const selectedIndex = selected ? parseInt(selected.value) : -1;
-        if (selectedIndex === q.correctAnswer) score++;
-        answers.push(selectedIndex);
+        let userAnswer;
+
+        if (q.type === "text") {
+          userAnswer = document.querySelector(`textarea[name="q${index}"]`).value.trim();
+        } else if (q.type === "multiple") {
+          const selected = [...document.querySelectorAll(`input[name="q${index}"]:checked`)].map(el => parseInt(el.value));
+          userAnswer = selected;
+          if (Array.isArray(q.correctAnswer) && JSON.stringify(selected.sort()) === JSON.stringify(q.correctAnswer.sort())) {
+            score++;
+          }
+        } else {
+          const selected = document.querySelector(`input[name="q${index}"]:checked`);
+          const selectedIndex = selected ? parseInt(selected.value) : -1;
+          userAnswer = selectedIndex;
+          if (selectedIndex === q.correctAnswer) score++;
+        }
+
+        answers.push(userAnswer);
       });
 
-      resultDiv.innerHTML = `✅ Your score: ${score} / ${currentQuiz.questions.length}`;
+      // حفظ النتيجة في results_<quizId>
+      const resultKey = `results_${currentQuiz.id}`;
+      const existingResults = JSON.parse(localStorage.getItem(resultKey)) || [];
+
+      const newResult = {
+        email: currentUser.email,
+        userId: currentUser.username || currentUser.email,
+        score: score,
+        answers: answers,
+        timestamp: Date.now(),
+        corrected: false,
+        finalScore: null
+      };
+
+      existingResults.push(newResult);
+      localStorage.setItem(resultKey, JSON.stringify(existingResults));
+
+      // تعطيل الحقول
+      document.querySelectorAll('#quiz-content input, #quiz-content textarea').forEach(el => el.disabled = true);
+      document.getElementById("submit-btn").disabled = true;
+
+      // توجه للنتيجة
+      window.location.href = `quiz-result.html?quizId=${encodeURIComponent(currentQuiz.id)}&user=${encodeURIComponent(currentUser.email)}`;
     }
   </script>
 </body>

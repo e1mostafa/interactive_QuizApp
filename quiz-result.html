@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Your Quiz Results - QuizApp</title>
+  <style>
+    body {
+      background-color: #0f172a;
+      color: white;
+      font-family: Arial, sans-serif;
+      padding: 30px;
+    }
+    h2, h3 {
+      color: #facc15;
+    }
+    .result-card {
+      background-color: #1e293b;
+      padding: 20px;
+      border-radius: 15px;
+      margin-bottom: 25px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+    .btn {
+      background-color: #f7971e;
+      color: white;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.3s ease;
+      margin-top: 20px;
+      display: inline-block;
+      text-decoration: none;
+    }
+    .btn:hover {
+      background-color: #cf7601;
+    }
+  </style>
+</head>
+<body>
+  <h2>🎉 Your Quiz Results</h2>
+  <div id="resultsContainer"></div>
+  <a href="profile.html" class="btn">⬅️ Back to Profile</a>
+
+  <script>
+    const currentUser = JSON.parse(localStorage.getItem("loggedInUser"));
+    if (!currentUser) {
+      alert("Please login first.");
+      window.location.href = "login.html";
+    }
+
+    const resultsContainer = document.getElementById("resultsContainer");
+
+    // نحصل على كل نتائج المستخدم
+    // نفترض أن نتائج كل كويز مخزنة تحت مفتاح: results_<quizId>
+    // ونبحث داخل كل نتائج عن المستخدم الحالي
+
+    const allQuizKeys = Object.keys(localStorage).filter(k => k.startsWith('quiz_'));
+    if(allQuizKeys.length === 0) {
+      resultsContainer.innerHTML = "<p>No quizzes available.</p>";
+    }
+
+    let userResultsFound = false;
+
+    allQuizKeys.forEach(quizKey => {
+      const quiz = JSON.parse(localStorage.getItem(quizKey));
+      if(!quiz) return;
+
+      const resultsKey = `results_${quiz.id}`;
+      const results = JSON.parse(localStorage.getItem(resultsKey)) || [];
+
+      // البحث عن نتيجة المستخدم الحالي في هذا الكويز
+      const userResult = results.find(r => r.email === currentUser.email);
+      if(userResult) {
+        userResultsFound = true;
+
+        // الدرجة النهائية بعد التصحيح اليدوي (لو موجودة)
+        const finalScore = userResult.finalScore !== undefined ? userResult.finalScore : userResult.score;
+
+        const correctedStatus = userResult.corrected ? "✅ تم تصحيح الأسئلة النصية" : "⏳ في انتظار التصحيح اليدوي";
+
+        const maxScore = quiz.questions.length + (quiz.questions.filter(q => q.type === "text").length * 10); // نفترض لكل سؤال نصي 10 درجات
+
+        const quizDiv = document.createElement("div");
+        quizDiv.className = "result-card";
+
+        quizDiv.innerHTML = `
+          <h3>${quiz.title}</h3>
+          <p><strong>Quiz ID:</strong> ${quiz.id}</p>
+          <p><strong>Score:</strong> ${finalScore} / ${maxScore}</p>
+          <p><strong>Status:</strong> ${correctedStatus}</p>
+          <p><small>تاريخ الإرسال: ${new Date(userResult.timestamp).toLocaleString()}</small></p>
+        `;
+
+        resultsContainer.appendChild(quizDiv);
+      }
+    });
+
+    if(!userResultsFound) {
+      resultsContainer.innerHTML = "<p>You have not taken any quizzes yet.</p>";
+    }
+  </script>
+</body>
+</html>
